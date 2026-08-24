@@ -53,7 +53,7 @@ export default function Booking() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 sm:py-20">
-      <StepIndicator current={step} />
+      <StepIndicator current={step} onStepClick={setStep} />
 
       <div className="mt-12">
         {step === 1 && (

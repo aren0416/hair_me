@@ -138,8 +138,8 @@ export default function Menu() {
     <div className="px-4 py-20 sm:px-6 sm:py-28">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <p className="text-xs font-medium uppercase tracking-widest text-accent">Menu</p>
-          <h1 className="mt-3 text-3xl font-semibold text-ink sm:text-4xl">시술 메뉴</h1>
+          <p className="text-xs font-medium uppercase tracking-widest text-accent">Treatment</p>
+          <h1 className="mt-3 text-3xl font-semibold text-ink sm:text-4xl">시술 안내</h1>
           <p className="mt-4 text-ink/70">원하는 시술을 검색하거나 카테고리에서 찾아보세요</p>
         </div>
 

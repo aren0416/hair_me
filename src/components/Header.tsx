@@ -13,7 +13,7 @@ export default function Header() {
             브랜드
           </Link>
           <Link to="/menu" className="hover:text-ink">
-            메뉴
+            시술
           </Link>
           <Link to="/designers" className="hover:text-ink">
             디자이너

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { designers } from '../data/designers'
 
 const heroImg =
   'https://images.unsplash.com/photo-1637777277337-f114350fb088?auto=format&fit=crop&w=1800&q=80'
@@ -23,21 +24,6 @@ const menus = [
     description: '퍼스널 컬러와 피부톤을 고려한 맞춤 헤어 컬러',
     price: '95,000원',
     image: 'https://images.unsplash.com/photo-1638064432648-bc2f9a91b06b?auto=format&fit=crop&w=800&q=80',
-  },
-]
-
-const designers = [
-  {
-    id: '1',
-    name: '김하나 디자이너',
-    specialty: '커트 · 펌 전문',
-    image: 'https://images.unsplash.com/photo-1634449571010-02389ed0f9b0?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: '2',
-    name: '이도윤 디자이너',
-    specialty: '컬러 · 스타일링 전문',
-    image: 'https://images.unsplash.com/photo-1700760934268-8aa0ef52ce0a?auto=format&fit=crop&w=800&q=80',
   },
 ]
 
@@ -139,8 +125,10 @@ export default function Home() {
                   loading="lazy"
                 />
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-ink">{designer.name}</h3>
-                  <p className="mt-2 text-sm text-ink/70">{designer.specialty}</p>
+                  <h3 className="text-lg font-semibold text-ink">
+                    {designer.name} <span className="font-normal text-ink/60">{designer.title}</span>
+                  </h3>
+                  <p className="mt-2 text-sm text-ink/70">{designer.specialties.join(' · ')} 전문</p>
                 </div>
               </Link>
             ))}

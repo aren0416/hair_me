@@ -19,7 +19,7 @@ export default function Location() {
   return (
     <div>
       {/* Intro */}
-      <section className="px-4 py-20 text-center sm:px-6 sm:py-28">
+      <section className="px-4 py-14 text-center sm:px-6 sm:py-20">
         <p className="text-xs font-medium uppercase tracking-widest text-accent">Location</p>
         <h1 className="mx-auto mt-4 max-w-xl text-3xl font-semibold leading-tight text-ink sm:text-4xl">
           HAIRME를 찾아오시는 길
@@ -28,9 +28,9 @@ export default function Location() {
       </section>
 
       {/* Map + address */}
-      <section className="border-t border-accent/20 bg-white/40 px-4 py-20 sm:px-6 sm:py-28">
+      <section className="border-t border-accent/20 bg-white/40 px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto grid max-w-6xl items-center gap-10 sm:grid-cols-2 sm:gap-16">
-          <div className="flex aspect-square w-full items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-sm text-ink/50 sm:aspect-[4/5]">
+          <div className="flex aspect-video w-full items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-sm text-ink/50">
             지도 영역 (추후 연동)
           </div>
           <div>
@@ -50,7 +50,7 @@ export default function Location() {
       </section>
 
       {/* Info cards */}
-      <section className="px-4 py-20 sm:px-6 sm:py-28">
+      <section className="px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-semibold text-ink sm:text-3xl">방문 안내</h2>
           <div className="mt-12 grid gap-6 sm:grid-cols-3">

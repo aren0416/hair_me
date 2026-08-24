@@ -1,32 +1,19 @@
-# React + TypeScript + Vite
+# HAIRME
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+바이브코딩으로 헤어예약사이트 만들기
 
-Currently, two official plugins are available:
+미용실 브랜드 소개와 시술 메뉴, 디자이너를 소개하고 고객이 온라인으로 예약할 수 있는
+풀스택 예약 사이트입니다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 스택
 
-## React Compiler
+- 프론트엔드: React + Vite + TypeScript + Tailwind CSS
+- 백엔드: Supabase (예정)
+- 배포: Vercel (예정)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 개발 서버 실행
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.

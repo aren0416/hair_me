@@ -151,6 +151,9 @@ export default function Home() {
             <p>화–토 10:00–20:00 · 일 11:00–18:00 · 매주 월요일 휴무</p>
             <p>02-555-2847</p>
           </div>
+          <Link to="/location" className="mt-6 inline-block text-sm font-medium text-accent hover:underline">
+            오시는 길 자세히 보기 →
+          </Link>
         </div>
       </section>
 

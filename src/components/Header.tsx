@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import UserMenu from './UserMenu'
 
 export default function Header() {
-  const { isLoggedIn, logout } = useAuth()
+  const { isLoggedIn } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b border-accent/20 bg-background/95 backdrop-blur">
@@ -28,18 +29,7 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
-            <>
-              <Link to="/mypage" className="hidden text-sm text-ink/80 hover:text-ink sm:inline">
-                마이페이지
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className="hidden text-sm text-ink/80 hover:text-ink sm:inline"
-              >
-                로그아웃
-              </button>
-            </>
+            <UserMenu />
           ) : (
             <Link to="/login" className="hidden text-sm text-ink/80 hover:text-ink sm:inline">
               로그인

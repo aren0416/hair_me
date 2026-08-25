@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UserMenu from './UserMenu'
@@ -5,12 +6,22 @@ import UserMenu from './UserMenu'
 export default function Header() {
   const { isLoggedIn } = useAuth()
   const isHome = useLocation().pathname === '/'
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20)
+    handleScroll()
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
     <header
       className={
         isHome
-          ? 'absolute inset-x-0 top-0 z-50'
+          ? `fixed inset-x-0 top-0 z-50 transition-colors ${
+              scrolled ? 'bg-accent/90 backdrop-blur' : 'bg-transparent'
+            }`
           : 'sticky top-0 z-50 border-b border-accent/20 bg-background/95 backdrop-blur'
       }
     >

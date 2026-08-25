@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { categories, menuItems, type MenuItem } from '../data/menuItems'
+import { categories, menuItems } from '../data/menuItems'
 
 export default function Menu() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<(typeof categories)[number]['id']>('all')
-  const [selected, setSelected] = useState<MenuItem | null>(null)
 
   const filtered = useMemo(() => {
     return menuItems.filter((item) => {
@@ -57,10 +56,9 @@ export default function Menu() {
         {filtered.length > 0 ? (
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((item) => (
-              <button
+              <Link
                 key={item.id}
-                type="button"
-                onClick={() => setSelected(item)}
+                to={`/menu/${item.id}`}
                 className="group overflow-hidden rounded-2xl border border-accent/20 bg-white/40 text-left transition hover:border-accent"
               >
                 <img
@@ -77,51 +75,13 @@ export default function Menu() {
                     <span className="font-semibold text-accent">{item.price}</span>
                   </div>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         ) : (
           <p className="mt-16 text-center text-sm text-ink/50">해당 시술이 없습니다.</p>
         )}
       </div>
-
-      {/* Detail modal */}
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-4"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img src={selected.image} alt={selected.name} className="aspect-[4/3] w-full object-cover" />
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-ink">{selected.name}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-ink/70">{selected.description}</p>
-              <div className="mt-4 flex items-center justify-between border-t border-accent/10 pt-4">
-                <span className="text-sm text-ink/60">소요시간 {selected.duration}</span>
-                <span className="text-lg font-semibold text-accent">{selected.price}</span>
-              </div>
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
-                >
-                  닫기
-                </button>
-                <Link
-                  to="/booking"
-                  className="flex-1 rounded-full bg-accent py-3 text-center text-sm font-medium text-background transition hover:opacity-90"
-                >
-                  예약하기
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

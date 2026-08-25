@@ -14,6 +14,7 @@ import Home from './pages/Home'
 import Location from './pages/Location'
 import Login from './pages/Login'
 import Menu from './pages/Menu'
+import MenuDetail from './pages/MenuDetail'
 import MyPage from './pages/MyPage'
 import NotFound from './pages/NotFound'
 import Signup from './pages/Signup'
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/brand" element={<Brand />} />
         <Route path="/menu" element={<Menu />} />
+        <Route path="/menu/:id" element={<MenuDetail />} />
         <Route path="/designers" element={<Designers />} />
         <Route path="/designers/:id" element={<DesignerDetail />} />
         <Route path="/location" element={<Location />} />

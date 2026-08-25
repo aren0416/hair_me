@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './layouts/AdminLayout'
 import MainLayout from './layouts/MainLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -15,7 +15,6 @@ import Location from './pages/Location'
 import Login from './pages/Login'
 import Menu from './pages/Menu'
 import MyPage from './pages/MyPage'
-import MyReservations from './pages/MyReservations'
 import NotFound from './pages/NotFound'
 import Signup from './pages/Signup'
 
@@ -34,7 +33,7 @@ export default function App() {
         <Route path="/booking" element={<Booking />} />
         <Route path="/booking/complete" element={<BookingComplete />} />
         <Route path="/mypage" element={<MyPage />} />
-        <Route path="/mypage/reservations" element={<MyReservations />} />
+        <Route path="/mypage/reservations" element={<Navigate to="/mypage" replace />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

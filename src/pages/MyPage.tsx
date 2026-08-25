@@ -2,48 +2,100 @@ import { Link } from 'react-router-dom'
 import LoginForm from '../components/LoginForm'
 import { useAuth } from '../context/AuthContext'
 import { useReservations } from '../context/ReservationsContext'
+import { designers } from '../data/designers'
+import { menuItems } from '../data/menuItems'
+import { formatDateLabel } from '../utils/date'
 
 export default function MyPage() {
-  const { isLoggedIn, logout } = useAuth()
-  const { reservations } = useReservations()
+  const { isLoggedIn, user } = useAuth()
+  const { reservations, cancelReservation } = useReservations()
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !user) {
     return <LoginForm />
   }
 
-  const upcomingCount = reservations.filter((r) => r.status === '예정').length
+  const sortedReservations = [...reservations].sort((a, b) =>
+    `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`),
+  )
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 sm:py-28">
       <p className="text-xs font-medium uppercase tracking-widest text-accent">My Page</p>
       <h1 className="mt-3 text-2xl font-semibold text-ink">마이페이지</h1>
-      <p className="mt-2 text-sm text-ink/60">예약 내역을 확인하고 관리할 수 있어요.</p>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        <Link
-          to="/mypage/reservations"
-          className="rounded-2xl border border-accent/20 bg-white/40 p-6 transition hover:border-accent"
-        >
-          <h2 className="font-semibold text-ink">내 예약 내역</h2>
-          <p className="mt-2 text-sm text-ink/60">예정된 예약 {upcomingCount}건</p>
-        </Link>
+      {/* 내 정보 */}
+      <div className="mt-8 flex items-center gap-4 rounded-2xl border border-accent/20 bg-white/40 p-6">
+        <img
+          src={user.avatarUrl}
+          alt={user.name}
+          className="size-16 shrink-0 rounded-full object-cover"
+        />
+        <div>
+          <p className="font-semibold text-ink">{user.name}</p>
+          <p className="mt-1 text-sm text-ink/60">{user.email}</p>
+        </div>
+      </div>
 
-        <Link
-          to="/booking"
-          className="rounded-2xl border border-accent/20 bg-white/40 p-6 transition hover:border-accent"
-        >
-          <h2 className="font-semibold text-ink">새 예약하기</h2>
-          <p className="mt-2 text-sm text-ink/60">원하는 시간에 새로운 예약을 진행해요</p>
+      {/* 예약내역 */}
+      <div className="mt-10 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-ink">예약내역</h2>
+        <Link to="/booking" className="text-sm font-medium text-accent hover:underline">
+          새 예약하기
         </Link>
       </div>
 
-      <button
-        type="button"
-        onClick={logout}
-        className="mt-10 rounded-full border border-accent/30 px-6 py-2.5 text-sm font-medium text-ink/70 transition hover:border-accent"
-      >
-        로그아웃
-      </button>
+      {sortedReservations.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-accent/20 bg-white/40 p-10 text-center">
+          <p className="text-sm text-ink/60">아직 예약 내역이 없어요.</p>
+          <Link
+            to="/booking"
+            className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-background transition hover:opacity-90"
+          >
+            예약하러 가기
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {sortedReservations.map((reservation) => {
+            const menuItem = menuItems.find((m) => m.id === reservation.menuId)
+            const designer = designers.find((d) => d.id === reservation.designerId)
+            if (!menuItem) return null
+
+            return (
+              <div key={reservation.id} className="rounded-2xl border border-accent/20 bg-white/40 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-semibold text-ink">{menuItem.name}</h3>
+                    <p className="mt-1 text-sm text-ink/60">
+                      {formatDateLabel(reservation.date)} {reservation.time} ·{' '}
+                      {designer ? `${designer.name} ${designer.title}` : '디자이너 상관없음'}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                      reservation.status === '예정'
+                        ? 'bg-accent/10 text-accent'
+                        : 'bg-ink/5 text-ink/40'
+                    }`}
+                  >
+                    {reservation.status}
+                  </span>
+                </div>
+
+                {reservation.status === '예정' && (
+                  <button
+                    type="button"
+                    onClick={() => cancelReservation(reservation.id)}
+                    className="mt-4 rounded-full border border-accent/30 px-5 py-2 text-sm font-medium text-ink/70 transition hover:border-accent"
+                  >
+                    예약 취소
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

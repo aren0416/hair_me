@@ -1,7 +1,20 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
+export interface MockUser {
+  name: string
+  email: string
+  avatarUrl: string
+}
+
+export const MOCK_USER: MockUser = {
+  name: '홍길동',
+  email: 'test@hairme.com',
+  avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80',
+}
+
 interface AuthContextValue {
   isLoggedIn: boolean
+  user: MockUser | null
   login: () => void
   logout: () => void
 }
@@ -21,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         isLoggedIn,
+        user: isLoggedIn ? MOCK_USER : null,
         login: () => setIsLoggedIn(true),
         logout: () => setIsLoggedIn(false),
       }}

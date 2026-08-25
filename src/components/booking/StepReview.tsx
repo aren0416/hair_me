@@ -1,5 +1,6 @@
 import type { Designer } from '../../data/designers'
 import type { MenuItem } from '../../data/menuItems'
+import { formatDateLabel } from '../../utils/date'
 
 interface StepReviewProps {
   menuItem: MenuItem
@@ -11,11 +12,6 @@ interface StepReviewProps {
   notes: string
   onConfirm: () => void
   onBack: () => void
-}
-
-function formatDateLabel(dateKey: string) {
-  const [, month, day] = dateKey.split('-')
-  return `${Number(month)}월 ${Number(day)}일`
 }
 
 export default function StepReview({

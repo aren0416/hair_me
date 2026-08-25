@@ -28,13 +28,18 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="hidden text-sm text-ink/80 hover:text-ink sm:inline"
-            >
-              로그아웃
-            </button>
+            <>
+              <Link to="/mypage" className="hidden text-sm text-ink/80 hover:text-ink sm:inline">
+                마이페이지
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="hidden text-sm text-ink/80 hover:text-ink sm:inline"
+              >
+                로그아웃
+              </button>
+            </>
           ) : (
             <Link to="/login" className="hidden text-sm text-ink/80 hover:text-ink sm:inline">
               로그인

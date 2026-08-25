@@ -8,6 +8,7 @@ import StepMenu from '../components/booking/StepMenu'
 import StepReview from '../components/booking/StepReview'
 import LoginForm from '../components/LoginForm'
 import { useAuth } from '../context/AuthContext'
+import { useReservations } from '../context/ReservationsContext'
 import { designers } from '../data/designers'
 import { menuItems } from '../data/menuItems'
 
@@ -33,6 +34,7 @@ const initialSelection: Selection = {
 
 export default function Booking() {
   const { isLoggedIn } = useAuth()
+  const { addReservation } = useReservations()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [selection, setSelection] = useState<Selection>(initialSelection)
@@ -45,6 +47,15 @@ export default function Booking() {
   const goBack = () => setStep((s) => Math.max(s - 1, 1))
 
   const handleConfirm = () => {
+    addReservation({
+      menuId: selection.menuId!,
+      designerId: selection.designerId ?? null,
+      date: selection.date,
+      time: selection.time,
+      name: selection.name,
+      phone: selection.phone,
+      notes: selection.notes,
+    })
     navigate('/booking/complete', { state: selection })
   }
 

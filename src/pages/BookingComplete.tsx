@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { designers } from '../data/designers'
 import { menuItems } from '../data/menuItems'
+import { formatDateLabel } from '../utils/date'
 
 interface BookingState {
   menuId: string | null
@@ -10,11 +11,6 @@ interface BookingState {
   name: string
   phone: string
   notes: string
-}
-
-function formatDateLabel(dateKey: string) {
-  const [, month, day] = dateKey.split('-')
-  return `${Number(month)}월 ${Number(day)}일`
 }
 
 export default function BookingComplete() {

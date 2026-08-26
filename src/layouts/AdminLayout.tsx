@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const navItems = [
   { to: '/admin', label: '대시보드', end: true },
   { to: '/admin/reservations', label: '예약 관리' },
+  { to: '/admin/customers', label: '고객 관리' },
   { to: '/admin/designers', label: '디자이너 관리' },
   { to: '/admin/menus', label: '메뉴 관리' },
 ]

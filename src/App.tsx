@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminLayout from './layouts/AdminLayout'
 import MainLayout from './layouts/MainLayout'
+import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminDesigners from './pages/admin/AdminDesigners'
 import AdminMenus from './pages/admin/AdminMenus'
@@ -41,6 +42,7 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="reservations" element={<AdminReservations />} />
+        <Route path="customers" element={<AdminCustomers />} />
         <Route path="designers" element={<AdminDesigners />} />
         <Route path="menus" element={<AdminMenus />} />
       </Route>

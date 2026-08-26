@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createSeedReservations } from '../data/reservations'
 
 export interface Reservation {
   id: string
@@ -29,7 +30,7 @@ const STORAGE_KEY = 'hairme_mock_reservations'
 export function ReservationsProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? (JSON.parse(stored) as Reservation[]) : []
+    return stored ? (JSON.parse(stored) as Reservation[]) : createSeedReservations()
   })
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import type { Reservation } from '../context/ReservationsContext'
+import { addDays, toDateKey } from '../utils/date'
 import { designers } from './designers'
 import { menuItems } from './menuItems'
 
@@ -91,19 +92,6 @@ const specs: SeedSpec[] = [
   { name: '한유나', phone: '010-1010-2020', offsetDays: -3, status: '취소됨', menuIndex: 5, designerIndex: 1, time: '16:00' },
   { name: '한유나', phone: '010-1010-2020', offsetDays: 6, status: '예정', menuIndex: 10, designerIndex: 0, time: '11:00' },
 ]
-
-function toDateKey(date: Date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function addDays(base: Date, days: number) {
-  const result = new Date(base)
-  result.setDate(result.getDate() + days)
-  return result
-}
 
 export function createSeedReservations(): Reservation[] {
   const today = new Date()

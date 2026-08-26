@@ -5,7 +5,7 @@ const navItems = [
   { to: '/admin/reservations', label: '예약 관리' },
   { to: '/admin/customers', label: '고객 관리' },
   { to: '/admin/designers', label: '디자이너 관리' },
-  { to: '/admin/menus', label: '메뉴 관리' },
+  { to: '/admin/menus', label: '시술 관리' },
 ]
 
 export default function AdminLayout() {

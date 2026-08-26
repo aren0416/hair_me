@@ -46,7 +46,7 @@ export default function AdminMenus() {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">메뉴 관리</h1>
+          <h1 className="text-2xl font-semibold text-ink">시술 관리</h1>
           <p className="mt-1 text-sm text-ink/60">시술 메뉴를 등록하고 수정할 수 있어요.</p>
         </div>
         <button

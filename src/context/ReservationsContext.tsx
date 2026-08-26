@@ -9,7 +9,7 @@ export interface Reservation {
   name: string
   phone: string
   notes: string
-  status: '예정' | '취소됨'
+  status: '예정' | '완료' | '취소됨'
   createdAt: string
 }
 
@@ -19,6 +19,7 @@ interface ReservationsContextValue {
   reservations: Reservation[]
   addReservation: (reservation: NewReservation) => void
   cancelReservation: (id: string) => void
+  completeReservation: (id: string) => void
 }
 
 const ReservationsContext = createContext<ReservationsContextValue | null>(null)
@@ -49,8 +50,14 @@ export function ReservationsProvider({ children }: { children: ReactNode }) {
     setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: '취소됨' } : r)))
   }
 
+  const completeReservation = (id: string) => {
+    setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: '완료' } : r)))
+  }
+
   return (
-    <ReservationsContext.Provider value={{ reservations, addReservation, cancelReservation }}>
+    <ReservationsContext.Provider
+      value={{ reservations, addReservation, cancelReservation, completeReservation }}
+    >
       {children}
     </ReservationsContext.Provider>
   )

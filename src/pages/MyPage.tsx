@@ -16,6 +16,12 @@ const quickActions = [
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5MB
 
+const statusBadgeClass: Record<Reservation['status'], string> = {
+  예정: 'bg-accent/10 text-accent',
+  완료: 'bg-ink/10 text-ink/60',
+  취소됨: 'bg-ink/5 text-ink/40',
+}
+
 export default function MyPage() {
   const { isLoggedIn, user, updateAvatar } = useAuth()
   const { reservations, cancelReservation } = useReservations()
@@ -158,11 +164,7 @@ export default function MyPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                        reservation.status === '예정'
-                          ? 'bg-accent/10 text-accent'
-                          : 'bg-ink/5 text-ink/40'
-                      }`}
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[reservation.status]}`}
                     >
                       {reservation.status}
                     </span>
@@ -196,9 +198,7 @@ export default function MyPage() {
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold text-ink">{menuItem.name}</h2>
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        selected.status === '예정' ? 'bg-accent/10 text-accent' : 'bg-ink/5 text-ink/40'
-                      }`}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[selected.status]}`}
                     >
                       {selected.status}
                     </span>

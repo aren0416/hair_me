@@ -17,26 +17,35 @@ interface AuthContextValue {
   user: MockUser | null
   login: () => void
   logout: () => void
+  updateAvatar: (avatarUrl: string) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const STORAGE_KEY = 'hairme_mock_auth'
+const AVATAR_STORAGE_KEY = 'hairme_mock_avatar'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem(STORAGE_KEY) === 'true')
+  const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem(AVATAR_STORAGE_KEY) || MOCK_USER.avatarUrl)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, String(isLoggedIn))
   }, [isLoggedIn])
 
+  const updateAvatar = (url: string) => {
+    setAvatarUrl(url)
+    localStorage.setItem(AVATAR_STORAGE_KEY, url)
+  }
+
   return (
     <AuthContext.Provider
       value={{
         isLoggedIn,
-        user: isLoggedIn ? MOCK_USER : null,
+        user: isLoggedIn ? { ...MOCK_USER, avatarUrl } : null,
         login: () => setIsLoggedIn(true),
         logout: () => setIsLoggedIn(false),
+        updateAvatar,
       }}
     >
       {children}

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoginForm from '../components/LoginForm'
-import { CalendarIcon, ChevronRightIcon, ListIcon, PhoneIcon } from '../components/icons'
+import { CalendarIcon, CameraIcon, ChevronRightIcon, ListIcon, PhoneIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useReservations, type Reservation } from '../context/ReservationsContext'
 import { designers } from '../data/designers'
@@ -14,13 +14,41 @@ const quickActions = [
   { to: 'tel:02-555-2847', label: '고객센터', icon: PhoneIcon },
 ]
 
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5MB
+
 export default function MyPage() {
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, updateAvatar } = useAuth()
   const { reservations, cancelReservation } = useReservations()
   const [selected, setSelected] = useState<Reservation | null>(null)
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   if (!isLoggedIn || !user) {
     return <LoginForm />
+  }
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('이미지 파일만 선택할 수 있어요.')
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError('5MB 이하의 이미지만 선택할 수 있어요.')
+      return
+    }
+
+    setAvatarError(null)
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        updateAvatar(reader.result)
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const sortedReservations = [...reservations].sort((a, b) =>
@@ -31,11 +59,32 @@ export default function MyPage() {
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 sm:py-28">
       {/* 내 정보 */}
       <div className="flex flex-col items-center text-center">
-        <img
-          src={user.avatarUrl}
-          alt={user.name}
-          className="size-28 rounded-full object-cover"
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          className="group relative size-28 shrink-0 rounded-full"
+          aria-label="프로필 사진 변경"
+        >
+          <img
+            src={user.avatarUrl}
+            alt={user.name}
+            className="size-28 rounded-full object-cover"
+          />
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/0 text-white opacity-0 transition group-hover:bg-ink/40 group-hover:opacity-100">
+            <CameraIcon className="size-7" />
+          </span>
+          <span className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-background bg-accent text-background">
+            <CameraIcon className="size-4" />
+          </span>
+        </button>
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarChange}
+          className="hidden"
         />
+        {avatarError && <p className="mt-2 text-xs text-red-500">{avatarError}</p>}
         <h1 className="mt-4 text-xl font-semibold text-ink">{user.name}</h1>
         <p className="mt-1 text-sm text-ink/60">{user.email}</p>
 

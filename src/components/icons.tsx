@@ -74,6 +74,18 @@ export function StarIcon({ className = 'size-5', filled = true }: IconProps & { 
   )
 }
 
+export function CameraIcon({ className = 'size-5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={className}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23H4.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h15a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-.686a2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.03h-3.632a2.192 2.192 0 0 0-1.736 1.03l-.822 1.317ZM16.5 13.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z"
+      />
+    </svg>
+  )
+}
+
 export function ChevronRightIcon({ className = 'size-5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className={className}>

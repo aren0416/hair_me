@@ -6,6 +6,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminDesigners from './pages/admin/AdminDesigners'
 import AdminMenus from './pages/admin/AdminMenus'
 import AdminReservations from './pages/admin/AdminReservations'
+import AdminSettings from './pages/admin/AdminSettings'
 import Booking from './pages/Booking'
 import BookingComplete from './pages/BookingComplete'
 import Brand from './pages/Brand'
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="customers" element={<AdminCustomers />} />
         <Route path="designers" element={<AdminDesigners />} />
         <Route path="menus" element={<AdminMenus />} />
+        <Route path="settings" element={<AdminSettings />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

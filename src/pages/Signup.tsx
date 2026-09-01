@@ -58,6 +58,12 @@ export default function Signup() {
       return
     }
 
+    // 이메일 확인이 꺼져 있으면 가입과 동시에 세션이 발급돼 자동 로그인되는데,
+    // 로그인 페이지에서 직접 로그인하기 전까지는 로그인 상태가 되면 안 되므로 바로 로그아웃
+    if (data.session) {
+      await supabase.auth.signOut()
+    }
+
     navigate('/login', { state: { justSignedUp: true } })
   }
 

@@ -23,11 +23,15 @@ const statusBadgeClass: Record<Reservation['status'], string> = {
 }
 
 export default function MyPage() {
-  const { isLoggedIn, user, updateAvatar } = useAuth()
+  const { isLoggedIn, loading, user, updateAvatar } = useAuth()
   const { reservations, cancelReservation } = useReservations()
   const [selected, setSelected] = useState<Reservation | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  if (loading) {
+    return null
+  }
 
   if (!isLoggedIn || !user) {
     return <LoginForm />

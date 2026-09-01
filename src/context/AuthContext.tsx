@@ -13,6 +13,7 @@ const DEFAULT_AVATAR_URL =
 
 interface AuthContextValue {
   isLoggedIn: boolean
+  loading: boolean
   user: AuthUser | null
   logout: () => Promise<void>
   updateAvatar: (avatarUrl: string) => void
@@ -23,7 +24,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 const AVATAR_STORAGE_KEY = 'hairme_mock_avatar'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { session } = useSession()
+  const { session, loading } = useSession()
   const [avatarUrl, setAvatarUrl] = useState(
     () => localStorage.getItem(AVATAR_STORAGE_KEY) || DEFAULT_AVATAR_URL,
   )
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     : null
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn: !!session, user, logout, updateAvatar }}>
+    <AuthContext.Provider value={{ isLoggedIn: !!session, loading, user, logout, updateAvatar }}>
       {children}
     </AuthContext.Provider>
   )

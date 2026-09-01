@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import UserMenu from './UserMenu'
 
 export default function Header() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, loading } = useAuth()
   const isHome = useLocation().pathname === '/'
   const [scrolled, setScrolled] = useState(false)
 
@@ -51,7 +51,9 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
-          {isLoggedIn ? (
+          {loading ? (
+            <div className="size-9" />
+          ) : isLoggedIn ? (
             <UserMenu />
           ) : (
             <Link

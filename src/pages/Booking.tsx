@@ -33,11 +33,15 @@ const initialSelection: Selection = {
 }
 
 export default function Booking() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, loading } = useAuth()
   const { addReservation } = useReservations()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [selection, setSelection] = useState<Selection>(initialSelection)
+
+  if (loading) {
+    return null
+  }
 
   if (!isLoggedIn) {
     return <LoginForm />

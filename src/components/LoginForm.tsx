@@ -1,31 +1,34 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 
 const inputClass =
   'w-full rounded-xl border border-accent/30 bg-white/60 px-4 py-3 text-sm text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none'
 
-const FAKE_EMAIL = 'test@hairme.com'
-const FAKE_PASSWORD = 'test1234'
-
 export default function LoginForm() {
-  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (email === FAKE_EMAIL && password === FAKE_PASSWORD) {
-      setError('')
-      login()
-      if (location.pathname !== '/booking') {
-        navigate('/')
-      }
-    } else {
+    setSubmitting(true)
+    setError('')
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+
+    setSubmitting(false)
+
+    if (signInError) {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+      return
+    }
+
+    if (location.pathname !== '/booking') {
+      navigate('/')
     }
   }
 
@@ -70,15 +73,12 @@ export default function LoginForm() {
 
           <button
             type="submit"
-            className="w-full rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
+            disabled={submitting}
+            className="w-full rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
           >
-            로그인
+            {submitting ? '로그인 중...' : '로그인'}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-xs text-ink/40">
-          테스트 계정: {FAKE_EMAIL} / {FAKE_PASSWORD}
-        </p>
 
         <p className="mt-6 text-center text-sm text-ink/60">
           계정이 없으신가요?{' '}

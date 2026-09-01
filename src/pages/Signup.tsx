@@ -1,9 +1,54 @@
-import { Link } from 'react-router-dom'
+import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 
 const inputClass =
   'w-full rounded-xl border border-accent/30 bg-white/60 px-4 py-3 text-sm text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none'
 
 export default function Signup() {
+  const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (password !== passwordConfirm) {
+      setError('비밀번호가 일치하지 않습니다.')
+      return
+    }
+
+    setSubmitting(true)
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name, phone } },
+    })
+
+    setSubmitting(false)
+
+    if (signUpError) {
+      setError(signUpError.message)
+      return
+    }
+
+    // Supabase는 이미 가입된 이메일이어도 에러 없이 성공 응답을 주고,
+    // identities가 빈 배열로 오는 걸로 중복 가입 여부를 구분함
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setError('이미 가입된 이메일입니다.')
+      return
+    }
+
+    navigate('/login')
+  }
+
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-20 sm:px-6">
       <div className="w-full max-w-md">
@@ -12,33 +57,65 @@ export default function Signup() {
           <h1 className="mt-3 text-2xl font-semibold text-ink">회원가입</h1>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="mt-10 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-10 space-y-5">
           <div>
             <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-ink">
               이름
             </label>
-            <input id="name" type="text" placeholder="이름을 입력하세요" className={inputClass} />
+            <input
+              id="name"
+              type="text"
+              placeholder="이름을 입력하세요"
+              className={inputClass}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
           </div>
 
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
               이메일
             </label>
-            <input id="email" type="email" placeholder="you@example.com" className={inputClass} />
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              className={inputClass}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
 
           <div>
             <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-ink">
               전화번호
             </label>
-            <input id="phone" type="tel" placeholder="예약 확인을 위해 사용됩니다" className={inputClass} />
+            <input
+              id="phone"
+              type="tel"
+              placeholder="예약 확인을 위해 사용됩니다"
+              className={inputClass}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
           </div>
 
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink">
               비밀번호
             </label>
-            <input id="password" type="password" placeholder="비밀번호를 입력하세요" className={inputClass} />
+            <input
+              id="password"
+              type="password"
+              placeholder="비밀번호를 입력하세요"
+              className={inputClass}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
 
           <div>
@@ -50,19 +127,25 @@ export default function Signup() {
               type="password"
               placeholder="비밀번호를 다시 입력하세요"
               className={inputClass}
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              required
             />
           </div>
 
           <label className="flex items-start gap-2 text-sm text-ink/70">
-            <input type="checkbox" className="mt-0.5 accent-accent" />
+            <input type="checkbox" className="mt-0.5 accent-accent" required />
             이용약관 및 개인정보처리방침에 동의합니다
           </label>
 
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
           <button
             type="submit"
-            className="w-full rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
+            disabled={submitting}
+            className="w-full rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
           >
-            회원가입
+            {submitting ? '가입 중...' : '회원가입'}
           </button>
         </form>
 

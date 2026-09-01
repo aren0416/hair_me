@@ -51,7 +51,7 @@ export default function Signup() {
       return
     }
 
-    navigate('/login')
+    navigate('/login', { state: { justSignedUp: true } })
   }
 
   return (

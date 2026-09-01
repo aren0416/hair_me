@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Toast from './Toast'
 import { supabase } from '../lib/supabase'
 
 const inputClass =
@@ -12,6 +13,16 @@ export default function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showSignupToast, setShowSignupToast] = useState(
+    Boolean((location.state as { justSignedUp?: boolean } | null)?.justSignedUp),
+  )
+
+  useEffect(() => {
+    if (!showSignupToast) return
+    window.history.replaceState({}, '')
+    const timer = setTimeout(() => setShowSignupToast(false), 3000)
+    return () => clearTimeout(timer)
+  }, [showSignupToast])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -34,6 +45,7 @@ export default function LoginForm() {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-20 sm:px-6">
+      {showSignupToast && <Toast message="회원가입이 완료됐어요. 로그인해주세요." />}
       <div className="w-full max-w-md">
         <div className="text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-accent">Login</p>

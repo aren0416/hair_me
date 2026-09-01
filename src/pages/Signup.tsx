@@ -35,12 +35,17 @@ export default function Signup() {
     setSubmitting(false)
 
     if (signUpError) {
+      // 이메일 확인이 꺼져 있으면 중복 가입 시 이 메시지로 바로 에러가 옴
+      if (signUpError.message.includes('already registered')) {
+        setError('이미 가입된 이메일입니다.')
+        return
+      }
       setError(signUpError.message)
       return
     }
 
-    // Supabase는 이미 가입된 이메일이어도 에러 없이 성공 응답을 주고,
-    // identities가 빈 배열로 오는 걸로 중복 가입 여부를 구분함
+    // 이메일 확인이 켜져 있으면 중복 가입이어도 에러 없이 성공 응답을 주고,
+    // identities가 빈 배열로 오는 걸로만 구분할 수 있음
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       setError('이미 가입된 이메일입니다.')
       return

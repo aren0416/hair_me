@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase'
 const inputClass =
   'w-full rounded-xl border border-accent/30 bg-white/60 px-4 py-3 text-sm text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none'
 
+const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+
 export default function Signup() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -18,6 +20,11 @@ export default function Signup() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!PASSWORD_PATTERN.test(password)) {
+      setError('비밀번호는 8자 이상이며 숫자와 문자를 모두 포함해야 합니다.')
+      return
+    }
 
     if (password !== passwordConfirm) {
       setError('비밀번호가 일치하지 않습니다.')
@@ -115,10 +122,13 @@ export default function Signup() {
             <input
               id="password"
               type="password"
-              placeholder="비밀번호를 입력하세요"
+              placeholder="8자 이상, 숫자+문자 포함"
               className={inputClass}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              pattern={PASSWORD_PATTERN.source}
+              title="8자 이상이며 숫자와 문자를 모두 포함해야 합니다."
               required
             />
           </div>

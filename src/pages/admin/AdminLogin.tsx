@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
+import { supabaseAdmin } from '../../lib/supabaseAdmin'
 
 const inputClass =
   'w-full rounded-xl border border-accent/30 bg-white/60 px-4 py-3 text-sm text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none'
@@ -17,7 +17,7 @@ export default function AdminLogin() {
     setSubmitting(true)
     setError('')
 
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
       email,
       password,
     })
@@ -28,7 +28,7 @@ export default function AdminLogin() {
       return
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', signInData.session.user.id)
@@ -37,7 +37,7 @@ export default function AdminLogin() {
     setSubmitting(false)
 
     if (profileError || profile?.role !== 'admin') {
-      await supabase.auth.signOut()
+      await supabaseAdmin.auth.signOut()
       setError('관리자 계정이 아닙니다.')
       return
     }

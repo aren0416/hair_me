@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound'
 import Signup from './pages/Signup'
 
 // 관리자 화면은 일반 방문자에게 다운로드되지 않도록 별도 번들로 분리
+const AdminRoot = lazy(() => import('./pages/admin/AdminRoot'))
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
@@ -45,28 +46,22 @@ export default function App() {
       </Route>
 
       <Route
-        path="/admin/login"
         element={
           <Suspense fallback={null}>
-            <AdminLogin />
-          </Suspense>
-        }
-      />
-
-      <Route
-        path="/admin"
-        element={
-          <Suspense fallback={null}>
-            <AdminLayout />
+            <AdminRoot />
           </Suspense>
         }
       >
-        <Route index element={<AdminDashboard />} />
-        <Route path="reservations" element={<AdminReservations />} />
-        <Route path="customers" element={<AdminCustomers />} />
-        <Route path="designers" element={<AdminDesigners />} />
-        <Route path="menus" element={<AdminMenus />} />
-        <Route path="settings" element={<AdminSettings />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="reservations" element={<AdminReservations />} />
+          <Route path="customers" element={<AdminCustomers />} />
+          <Route path="designers" element={<AdminDesigners />} />
+          <Route path="menus" element={<AdminMenus />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />

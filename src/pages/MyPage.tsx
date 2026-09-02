@@ -1,11 +1,10 @@
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoginForm from '../components/LoginForm'
 import { CalendarIcon, CameraIcon, ChevronRightIcon, ListIcon, PhoneIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
-import { useReservations, type Reservation } from '../context/ReservationsContext'
-import { designers } from '../data/designers'
-import { menuItems } from '../data/menuItems'
+import { useSession } from '../context/SessionContext'
+import { supabase } from '../lib/supabase'
 import { formatDateLabel } from '../utils/date'
 
 const quickActions = [
@@ -16,7 +15,19 @@ const quickActions = [
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5MB
 
-const statusBadgeClass: Record<Reservation['status'], string> = {
+type ReservationStatus = '예정' | '완료' | '취소됨'
+
+interface MyReservation {
+  id: string
+  date: string
+  time: string
+  notes: string
+  status: ReservationStatus
+  menuName: string
+  designerName: string
+}
+
+const statusBadgeClass: Record<ReservationStatus, string> = {
   예정: 'bg-accent/10 text-accent',
   완료: 'bg-ink/10 text-ink/60',
   취소됨: 'bg-ink/5 text-ink/40',
@@ -24,10 +35,53 @@ const statusBadgeClass: Record<Reservation['status'], string> = {
 
 export default function MyPage() {
   const { isLoggedIn, loading, user, updateAvatar } = useAuth()
-  const { reservations, cancelReservation } = useReservations()
-  const [selected, setSelected] = useState<Reservation | null>(null)
+  const { session } = useSession()
+  const [reservations, setReservations] = useState<MyReservation[]>([])
+  const [reservationsLoading, setReservationsLoading] = useState(true)
+  const [selected, setSelected] = useState<MyReservation | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const loadReservations = useCallback(async () => {
+    if (!session) return
+
+    setReservationsLoading(true)
+
+    const { data } = await supabase
+      .from('reservations')
+      .select('id, date, time, notes, status, menus(name), designers(name, title)')
+      .eq('customer_id', session.user.id)
+      .order('date', { ascending: false })
+      .order('time', { ascending: false })
+
+    setReservations(
+      (data ?? []).map((r) => ({
+        id: r.id as string,
+        date: r.date as string,
+        time: (r.time as string).slice(0, 5),
+        notes: (r.notes as string) ?? '',
+        status: r.status as ReservationStatus,
+        menuName: (r.menus as unknown as { name: string } | null)?.name ?? '알 수 없음',
+        designerName: r.designers
+          ? (() => {
+              const designer = r.designers as unknown as { name: string; title: string }
+              return `${designer.name} ${designer.title}`
+            })()
+          : '상관없음',
+      })),
+    )
+    setReservationsLoading(false)
+  }, [session])
+
+  useEffect(() => {
+    loadReservations()
+  }, [loadReservations])
+
+  const handleCancel = async (id: string) => {
+    await supabase.from('reservations').update({ status: '취소됨' }).eq('id', id)
+    setSelected(null)
+    loadReservations()
+  }
 
   if (loading) {
     return null
@@ -60,10 +114,6 @@ export default function MyPage() {
     }
     reader.readAsDataURL(file)
   }
-
-  const sortedReservations = [...reservations].sort((a, b) =>
-    `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`),
-  )
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 sm:py-28">
@@ -137,9 +187,13 @@ export default function MyPage() {
       <div className="mt-10">
         <h2 className="text-lg font-semibold text-ink">예약내역</h2>
 
-        {sortedReservations.length === 0 ? (
+        {reservationsLoading ? (
           <div className="mt-4 rounded-2xl border border-accent/20 bg-white/40 p-10 text-center">
-            <p className="text-sm text-ink/60">아직 예약 내역이 없어요.</p>
+            <p className="text-sm text-ink/50">불러오는 중...</p>
+          </div>
+        ) : reservations.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-accent/20 bg-white/40 p-10 text-center">
+            <p className="text-sm text-ink/60">예약 내역이 없습니다</p>
             <Link
               to="/booking"
               className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-medium text-background transition hover:opacity-90"
@@ -149,110 +203,92 @@ export default function MyPage() {
           </div>
         ) : (
           <div className="mt-4 divide-y divide-accent/10 overflow-hidden rounded-2xl border border-accent/20 bg-white/40">
-            {sortedReservations.map((reservation) => {
-              const menuItem = menuItems.find((m) => m.id === reservation.menuId)
-              if (!menuItem) return null
-
-              return (
-                <button
-                  key={reservation.id}
-                  type="button"
-                  onClick={() => setSelected(reservation)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-accent/5"
-                >
-                  <div>
-                    <p className="font-medium text-ink">{menuItem.name}</p>
-                    <p className="mt-1 text-xs text-ink/50">
-                      {formatDateLabel(reservation.date)} {reservation.time}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[reservation.status]}`}
-                    >
-                      {reservation.status}
-                    </span>
-                    <ChevronRightIcon className="size-4 text-ink/30" />
-                  </div>
-                </button>
-              )
-            })}
+            {reservations.map((reservation) => (
+              <button
+                key={reservation.id}
+                type="button"
+                onClick={() => setSelected(reservation)}
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-accent/5"
+              >
+                <div>
+                  <p className="font-medium text-ink">
+                    {reservation.menuName} <span className="font-normal text-ink/50">· {reservation.designerName}</span>
+                  </p>
+                  <p className="mt-1 text-xs text-ink/50">
+                    {formatDateLabel(reservation.date)} {reservation.time}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[reservation.status]}`}
+                  >
+                    {reservation.status}
+                  </span>
+                  <ChevronRightIcon className="size-4 text-ink/30" />
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </div>
 
       {/* 예약 상세 모달 */}
-      {selected &&
-        (() => {
-          const menuItem = menuItems.find((m) => m.id === selected.menuId)
-          const designer = designers.find((d) => d.id === selected.designerId)
-          if (!menuItem) return null
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-4"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-ink">{selected.menuName}</h2>
+                <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[selected.status]}`}>
+                  {selected.status}
+                </span>
+              </div>
 
-          return (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-4"
-              onClick={() => setSelected(null)}
-            >
-              <div
-                className="w-full max-w-md overflow-hidden rounded-2xl bg-background"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img src={menuItem.image} alt={menuItem.name} className="aspect-[4/3] w-full object-cover" />
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-ink">{menuItem.name}</h2>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[selected.status]}`}
-                    >
-                      {selected.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-4 space-y-2 border-t border-accent/10 pt-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-ink/50">일시</span>
-                      <span className="font-medium text-ink">
-                        {formatDateLabel(selected.date)} {selected.time}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-ink/50">디자이너</span>
-                      <span className="font-medium text-ink">
-                        {designer ? `${designer.name} ${designer.title}` : '상관없음'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-ink/50">요청사항</span>
-                      <span className="font-medium text-ink">{selected.notes || '-'}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelected(null)}
-                      className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
-                    >
-                      닫기
-                    </button>
-                    {selected.status === '예정' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          cancelReservation(selected.id)
-                          setSelected(null)
-                        }}
-                        className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
-                      >
-                        예약 취소
-                      </button>
-                    )}
-                  </div>
+              <div className="mt-4 space-y-2 border-t border-accent/10 pt-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-ink/50">일시</span>
+                  <span className="font-medium text-ink">
+                    {formatDateLabel(selected.date)} {selected.time}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/50">디자이너</span>
+                  <span className="font-medium text-ink">{selected.designerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink/50">요청사항</span>
+                  <span className="font-medium text-ink">{selected.notes || '-'}</span>
                 </div>
               </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
+                >
+                  닫기
+                </button>
+                {selected.status === '예정' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCancel(selected.id)}
+                    className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
+                  >
+                    예약 취소
+                  </button>
+                )}
+              </div>
             </div>
-          )
-        })()}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

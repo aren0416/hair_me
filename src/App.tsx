@@ -1,13 +1,6 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import AdminLayout from './layouts/AdminLayout'
 import MainLayout from './layouts/MainLayout'
-import AdminCustomers from './pages/admin/AdminCustomers'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminDesigners from './pages/admin/AdminDesigners'
-import AdminLogin from './pages/admin/AdminLogin'
-import AdminMenus from './pages/admin/AdminMenus'
-import AdminReservations from './pages/admin/AdminReservations'
-import AdminSettings from './pages/admin/AdminSettings'
 import Booking from './pages/Booking'
 import BookingComplete from './pages/BookingComplete'
 import Brand from './pages/Brand'
@@ -21,6 +14,16 @@ import MenuDetail from './pages/MenuDetail'
 import MyPage from './pages/MyPage'
 import NotFound from './pages/NotFound'
 import Signup from './pages/Signup'
+
+// 관리자 화면은 일반 방문자에게 다운로드되지 않도록 별도 번들로 분리
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
+const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminDesigners = lazy(() => import('./pages/admin/AdminDesigners'))
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'))
+const AdminMenus = lazy(() => import('./pages/admin/AdminMenus'))
+const AdminReservations = lazy(() => import('./pages/admin/AdminReservations'))
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
 
 export default function App() {
   return (
@@ -41,9 +44,23 @@ export default function App() {
         <Route path="/mypage/reservations" element={<Navigate to="/mypage" replace />} />
       </Route>
 
-      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route
+        path="/admin/login"
+        element={
+          <Suspense fallback={null}>
+            <AdminLogin />
+          </Suspense>
+        }
+      />
 
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <Suspense fallback={null}>
+            <AdminLayout />
+          </Suspense>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="reservations" element={<AdminReservations />} />
         <Route path="customers" element={<AdminCustomers />} />

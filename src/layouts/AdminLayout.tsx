@@ -1,6 +1,7 @@
-import { Navigate, NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import { LogoutIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
+import NotFound from '../pages/NotFound'
 
 const navItems = [
   { to: '/admin', label: '대시보드', end: true },
@@ -19,7 +20,7 @@ export default function AdminLayout() {
   }
 
   if (!isLoggedIn || !isAdmin) {
-    return <Navigate to="/admin/login" replace />
+    return <NotFound />
   }
 
   return (

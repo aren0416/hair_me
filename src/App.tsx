@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout'
 import AdminCustomers from './pages/admin/AdminCustomers'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminDesigners from './pages/admin/AdminDesigners'
+import AdminLogin from './pages/admin/AdminLogin'
 import AdminMenus from './pages/admin/AdminMenus'
 import AdminReservations from './pages/admin/AdminReservations'
 import AdminSettings from './pages/admin/AdminSettings'
@@ -39,6 +40,8 @@ export default function App() {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/mypage/reservations" element={<Navigate to="/mypage" replace />} />
       </Route>
+
+      <Route path="/admin/login" element={<AdminLogin />} />
 
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />

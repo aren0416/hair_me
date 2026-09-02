@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { LogoutIcon } from '../components/icons'
-import { useAdminAuth } from '../context/AdminAuthContext'
+import { useAuth } from '../context/AuthContext'
 import NotFound from '../pages/NotFound'
 
 const navItems = [
@@ -13,7 +13,7 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
-  const { isLoggedIn, loading, isAdmin, roleLoading, logout } = useAdminAuth()
+  const { isLoggedIn, loading, isAdmin, roleLoading, logout } = useAuth()
 
   if (loading || (isLoggedIn && roleLoading)) {
     return null

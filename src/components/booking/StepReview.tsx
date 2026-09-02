@@ -10,6 +10,8 @@ interface StepReviewProps {
   name: string
   phone: string
   notes: string
+  submitting: boolean
+  error: string
   onConfirm: () => void
   onBack: () => void
 }
@@ -22,6 +24,8 @@ export default function StepReview({
   name,
   phone,
   notes,
+  submitting,
+  error,
   onConfirm,
   onBack,
 }: StepReviewProps) {
@@ -50,20 +54,24 @@ export default function StepReview({
         </div>
       </div>
 
+      {error && <p className="mt-6 text-center text-sm text-red-600">{error}</p>}
+
       <div className="mt-10 flex justify-between">
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full border border-accent/30 px-8 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
+          disabled={submitting}
+          className="rounded-full border border-accent/30 px-8 py-3 text-sm font-medium text-ink/70 transition hover:border-accent disabled:opacity-60"
         >
           이전
         </button>
         <button
           type="button"
           onClick={onConfirm}
-          className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-background transition hover:opacity-90"
+          disabled={submitting}
+          className="rounded-full bg-accent px-8 py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
         >
-          예약 확정하기
+          {submitting ? '저장 중...' : '예약 확정하기'}
         </button>
       </div>
     </div>

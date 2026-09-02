@@ -9,8 +9,11 @@ import StepReview from '../components/booking/StepReview'
 import LoginForm from '../components/LoginForm'
 import { useAuth } from '../context/AuthContext'
 import { useReservations } from '../context/ReservationsContext'
+import { useSession } from '../context/SessionContext'
 import { designers } from '../data/designers'
 import { menuItems } from '../data/menuItems'
+import { designerIdToSupabaseId, menuIdToSupabaseId } from '../data/supabaseIds'
+import { supabase } from '../lib/supabase'
 
 interface Selection {
   menuId: string | null
@@ -34,10 +37,13 @@ const initialSelection: Selection = {
 
 export default function Booking() {
   const { isLoggedIn, loading } = useAuth()
+  const { session } = useSession()
   const { addReservation } = useReservations()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [selection, setSelection] = useState<Selection>(initialSelection)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   if (loading) {
     return null
@@ -50,9 +56,31 @@ export default function Booking() {
   const goNext = () => setStep((s) => Math.min(s + 1, 5))
   const goBack = () => setStep((s) => Math.max(s - 1, 1))
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!session || !selection.menuId || submitting) return
+
+    setSubmitting(true)
+    setError('')
+
+    const { error: insertError } = await supabase.from('reservations').insert({
+      customer_id: session.user.id,
+      menu_id: menuIdToSupabaseId[selection.menuId],
+      designer_id: selection.designerId ? (designerIdToSupabaseId[selection.designerId] ?? null) : null,
+      date: selection.date,
+      time: selection.time,
+      name: selection.name,
+      phone: selection.phone,
+      notes: selection.notes,
+    })
+
+    if (insertError) {
+      setSubmitting(false)
+      setError('예약 저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+
     addReservation({
-      menuId: selection.menuId!,
+      menuId: selection.menuId,
       designerId: selection.designerId ?? null,
       date: selection.date,
       time: selection.time,
@@ -60,6 +88,7 @@ export default function Booking() {
       phone: selection.phone,
       notes: selection.notes,
     })
+
     navigate('/booking/complete', { state: selection })
   }
 
@@ -121,6 +150,8 @@ export default function Booking() {
             name={selection.name}
             phone={selection.phone}
             notes={selection.notes}
+            submitting={submitting}
+            error={error}
             onConfirm={handleConfirm}
             onBack={goBack}
           />

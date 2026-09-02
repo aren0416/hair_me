@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Navigate, NavLink, Outlet } from 'react-router-dom'
+import { LogoutIcon } from '../components/icons'
+import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   { to: '/admin', label: '대시보드', end: true },
@@ -10,11 +12,21 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
+  const { isLoggedIn, loading, isAdmin, roleLoading, logout } = useAuth()
+
+  if (loading || (isLoggedIn && roleLoading)) {
+    return null
+  }
+
+  if (!isLoggedIn || !isAdmin) {
+    return <Navigate to="/admin/login" replace />
+  }
+
   return (
     <div className="flex min-h-screen bg-background text-ink">
-      <aside className="w-56 shrink-0 border-r border-accent/20 px-4 py-6">
+      <aside className="flex w-56 shrink-0 flex-col border-r border-accent/20 px-4 py-6">
         <p className="mb-8 px-2 text-lg font-semibold">HAIRME Admin</p>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -30,6 +42,14 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
+        <button
+          type="button"
+          onClick={() => logout()}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink/60 transition hover:bg-accent/10 hover:text-ink"
+        >
+          <LogoutIcon className="size-4" />
+          로그아웃
+        </button>
       </aside>
       <main className="flex-1 p-8">
         <Outlet />

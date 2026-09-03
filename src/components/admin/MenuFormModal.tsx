@@ -1,18 +1,30 @@
 import { useState, type FormEvent } from 'react'
+import ImageUploadField from './ImageUploadField'
 import { categories, type MenuItem } from '../../data/menuItems'
 
 const editableCategories = categories.filter((c) => c.id !== 'all')
 
-export type MenuFormValues = Omit<MenuItem, 'id'>
-
-interface MenuFormModalProps {
-  initialValue: MenuItem | null
-  onClose: () => void
-  onSubmit: (values: MenuFormValues) => void
+export interface MenuRow {
+  id: string
+  category: MenuItem['category']
+  name: string
+  description: string
+  detail: string
+  duration_minutes: number
+  price: number
+  image: string
 }
 
-const emptyForm: MenuFormValues = {
-  category: 'cut',
+export type MenuFormValues = Omit<MenuRow, 'id'>
+
+interface MenuFormModalProps {
+  initialValue: MenuRow | null
+  onClose: () => void
+  onSubmit: (values: MenuFormValues) => Promise<string | null>
+}
+
+const emptyForm = {
+  category: 'cut' as MenuItem['category'],
   name: '',
   description: '',
   detail: '',
@@ -22,23 +34,37 @@ const emptyForm: MenuFormValues = {
 }
 
 export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuFormModalProps) {
-  const [form, setForm] = useState<MenuFormValues>(
-    initialValue
-      ? {
-          category: initialValue.category,
-          name: initialValue.name,
-          description: initialValue.description,
-          detail: initialValue.detail,
-          duration: initialValue.duration,
-          price: initialValue.price,
-          image: initialValue.image,
-        }
-      : emptyForm,
-  )
+  const [category, setCategory] = useState<MenuItem['category']>(initialValue?.category ?? emptyForm.category)
+  const [name, setName] = useState(initialValue?.name ?? emptyForm.name)
+  const [description, setDescription] = useState(initialValue?.description ?? emptyForm.description)
+  const [detail, setDetail] = useState(initialValue?.detail ?? emptyForm.detail)
+  const [duration, setDuration] = useState(String(initialValue?.duration_minutes ?? ''))
+  const [price, setPrice] = useState(String(initialValue?.price ?? ''))
+  const [image, setImage] = useState(initialValue?.image ?? emptyForm.image)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    onSubmit(form)
+    if (!image) {
+      setError('이미지를 등록해주세요.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    const message = await onSubmit({
+      category,
+      name,
+      description,
+      detail,
+      duration_minutes: Number(duration) || 0,
+      price: Number(price) || 0,
+      image,
+    })
+    if (message) {
+      setError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -54,8 +80,8 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
             <label className="mb-1.5 block text-xs font-medium text-ink/60">분류</label>
             <select
               required
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value as MenuFormValues['category'] })}
+              value={category}
+              onChange={(e) => setCategory(e.target.value as MenuItem['category'])}
               className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             >
               {editableCategories.map((c) => (
@@ -71,8 +97,8 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
             <input
               required
               type="text"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="예: 여성 커트"
               className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             />
@@ -80,24 +106,26 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink/60">소요 시간</label>
+              <label className="mb-1.5 block text-xs font-medium text-ink/60">소요 시간(분)</label>
               <input
                 required
-                type="text"
-                value={form.duration}
-                onChange={(e) => setForm({ ...form, duration: e.target.value })}
-                placeholder="예: 40분"
+                type="number"
+                min={0}
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                placeholder="예: 40"
                 className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink/60">가격</label>
+              <label className="mb-1.5 block text-xs font-medium text-ink/60">가격(원)</label>
               <input
                 required
-                type="text"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="예: 55,000원"
+                type="number"
+                min={0}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="예: 55000"
                 className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
               />
             </div>
@@ -108,8 +136,8 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
             <input
               required
               type="text"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               placeholder="목록/카드에 보여줄 짧은 설명"
               className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             />
@@ -120,51 +148,32 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
             <textarea
               required
               rows={3}
-              value={form.detail}
-              onChange={(e) => setForm({ ...form, detail: e.target.value })}
+              value={detail}
+              onChange={(e) => setDetail(e.target.value)}
               placeholder="상세 페이지에 보여줄 긴 설명"
               className="w-full resize-none rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-ink/60">이미지 URL</label>
-            <input
-              required
-              type="text"
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
-              placeholder="https://..."
-              className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
-            />
-            {form.image && (
-              <img
-                src={form.image}
-                alt="미리보기"
-                className="mt-3 aspect-[4/3] w-full rounded-xl object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                }}
-                onLoad={(e) => {
-                  e.currentTarget.style.display = 'block'
-                }}
-              />
-            )}
-          </div>
+          <ImageUploadField label="이미지" folder="menus" value={image} onChange={setImage} aspect={4 / 3} />
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
+              disabled={submitting}
+              className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent disabled:opacity-60"
             >
               취소
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
+              disabled={submitting}
+              className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
             >
-              저장
+              {submitting ? '저장 중...' : '저장'}
             </button>
           </div>
         </form>

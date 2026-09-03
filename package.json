@@ -15,8 +15,10 @@
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-table": "^8.21.3",
+    "browser-image-compression": "^2.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-easy-crop": "^6.2.3",
     "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.3.3"
   },

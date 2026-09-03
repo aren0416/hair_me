@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import ImageUploadField from './ImageUploadField'
+import PortfolioUploadField from './PortfolioUploadField'
 import type { Designer } from '../../data/designers'
 
 export type DesignerFormValues = Omit<Designer, 'id'>
@@ -6,7 +8,7 @@ export type DesignerFormValues = Omit<Designer, 'id'>
 interface DesignerFormModalProps {
   initialValue: Designer | null
   onClose: () => void
-  onSubmit: (values: DesignerFormValues) => void
+  onSubmit: (values: DesignerFormValues) => Promise<string | null>
 }
 
 const emptyForm: DesignerFormValues = {
@@ -42,11 +44,19 @@ export default function DesignerFormModal({ initialValue, onClose, onSubmit }: D
   const [image, setImage] = useState(initialValue?.image ?? emptyForm.image)
   const [career, setCareer] = useState(initialValue?.career.join('\n') ?? '')
   const [intro, setIntro] = useState(initialValue?.intro ?? emptyForm.intro)
-  const [portfolio, setPortfolio] = useState(initialValue?.portfolio.join('\n') ?? '')
+  const [portfolio, setPortfolio] = useState<string[]>(initialValue?.portfolio ?? [])
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    onSubmit({
+    if (!image) {
+      setError('대표 사진을 등록해주세요.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    const message = await onSubmit({
       name,
       title,
       specialties: toTags(specialties),
@@ -54,8 +64,12 @@ export default function DesignerFormModal({ initialValue, onClose, onSubmit }: D
       image,
       career: toLines(career),
       intro,
-      portfolio: toLines(portfolio),
+      portfolio,
     })
+    if (message) {
+      setError('저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -117,30 +131,7 @@ export default function DesignerFormModal({ initialValue, onClose, onSubmit }: D
             </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-ink/60">대표 사진 URL</label>
-            <input
-              required
-              type="text"
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
-              placeholder="https://..."
-              className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
-            />
-            {image && (
-              <img
-                src={image}
-                alt="미리보기"
-                className="mt-3 aspect-[4/3] w-full rounded-xl object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none'
-                }}
-                onLoad={(e) => {
-                  e.currentTarget.style.display = 'block'
-                }}
-              />
-            )}
-          </div>
+          <ImageUploadField label="대표 사진" folder="designers" value={image} onChange={setImage} aspect={4 / 3} />
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-ink/60">소개글</label>
@@ -165,30 +156,31 @@ export default function DesignerFormModal({ initialValue, onClose, onSubmit }: D
             />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-ink/60">포트폴리오 이미지 URL</label>
-            <textarea
-              rows={3}
-              value={portfolio}
-              onChange={(e) => setPortfolio(e.target.value)}
-              placeholder={'한 줄에 하나씩 입력'}
-              className="w-full resize-none rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
-            />
-          </div>
+          <PortfolioUploadField
+            label="포트폴리오"
+            folder="designer-portfolio"
+            value={portfolio}
+            onChange={setPortfolio}
+            aspect={4 / 3}
+          />
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent"
+              disabled={submitting}
+              className="flex-1 rounded-full border border-accent/30 py-3 text-sm font-medium text-ink/70 transition hover:border-accent disabled:opacity-60"
             >
               취소
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90"
+              disabled={submitting}
+              className="flex-1 rounded-full bg-accent py-3 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-60"
             >
-              저장
+              {submitting ? '저장 중...' : '저장'}
             </button>
           </div>
         </form>

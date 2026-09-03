@@ -26,13 +26,9 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const AVATAR_STORAGE_KEY = 'hairme_mock_avatar'
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { session, loading } = useSession()
-  const [avatarUrl, setAvatarUrl] = useState(
-    () => localStorage.getItem(AVATAR_STORAGE_KEY) || DEFAULT_AVATAR_URL,
-  )
+  const [avatarUrl, setAvatarUrl] = useState(DEFAULT_AVATAR_URL)
   const [role, setRole] = useState<UserRole | null>(null)
   const [roleLoading, setRoleLoading] = useState(true)
 
@@ -44,12 +40,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase
       .from('profiles')
-      .select('role')
+      .select('role, avatar_url')
       .eq('id', session.user.id)
       .single()
       .then(({ data }) => {
         if (cancelled) return
         setRole((data?.role as UserRole | undefined) ?? null)
+        setAvatarUrl((data?.avatar_url as string | null) || DEFAULT_AVATAR_URL)
         setRoleLoading(false)
       })
 
@@ -63,7 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateAvatar = (url: string) => {
     setAvatarUrl(url)
-    localStorage.setItem(AVATAR_STORAGE_KEY, url)
   }
 
   const logout = async () => {

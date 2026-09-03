@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoginForm from '../components/LoginForm'
+import ImageCropUploader from '../components/ImageCropUploader'
 import { CalendarIcon, CameraIcon, ChevronRightIcon, ListIcon, PhoneIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useSession } from '../context/SessionContext'
 import { supabase } from '../lib/supabase'
+import { deleteImageIfOwned } from '../lib/imageUpload'
 import { formatDateLabel } from '../utils/date'
 
 const quickActions = [
@@ -12,8 +14,6 @@ const quickActions = [
   { to: '/menu', label: '시술 메뉴', icon: ListIcon },
   { to: 'tel:02-555-2847', label: '고객센터', icon: PhoneIcon },
 ]
-
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024 // 5MB
 
 type ReservationStatus = '예정' | '완료' | '취소됨'
 
@@ -40,6 +40,7 @@ export default function MyPage() {
   const [reservationsLoading, setReservationsLoading] = useState(true)
   const [selected, setSelected] = useState<MyReservation | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [selectedAvatarImage, setSelectedAvatarImage] = useState<string | null>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const loadReservations = useCallback(async () => {
@@ -100,19 +101,28 @@ export default function MyPage() {
       setAvatarError('이미지 파일만 선택할 수 있어요.')
       return
     }
-    if (file.size > MAX_AVATAR_SIZE) {
-      setAvatarError('5MB 이하의 이미지만 선택할 수 있어요.')
-      return
-    }
 
     setAvatarError(null)
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        updateAvatar(reader.result)
-      }
+    setSelectedAvatarImage(URL.createObjectURL(file))
+  }
+
+  const closeAvatarCropModal = () => {
+    if (selectedAvatarImage) URL.revokeObjectURL(selectedAvatarImage)
+    setSelectedAvatarImage(null)
+  }
+
+  const handleAvatarUploaded = async (url: string) => {
+    if (!session) return
+    const previous = user?.avatarUrl
+    const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', session.user.id)
+    if (error) {
+      setAvatarError('프로필 사진 저장에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      closeAvatarCropModal()
+      return
     }
-    reader.readAsDataURL(file)
+    updateAvatar(url)
+    if (previous) deleteImageIfOwned(previous)
+    closeAvatarCropModal()
   }
 
   return (
@@ -144,6 +154,15 @@ export default function MyPage() {
           onChange={handleAvatarChange}
           className="hidden"
         />
+        {selectedAvatarImage && session && (
+          <ImageCropUploader
+            imageSrc={selectedAvatarImage}
+            aspect={1}
+            folder={`avatars/${session.user.id}`}
+            onCancel={closeAvatarCropModal}
+            onUploaded={handleAvatarUploaded}
+          />
+        )}
         {avatarError && <p className="mt-2 text-xs text-red-500">{avatarError}</p>}
         <h1 className="mt-4 text-xl font-semibold text-ink">{user.name}</h1>
         <p className="mt-1 text-sm text-ink/60">{user.email}</p>

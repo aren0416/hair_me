@@ -1,22 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import DesignerFormModal, { type DesignerFormValues } from '../../components/admin/DesignerFormModal'
 import { PencilIcon, PlusIcon, TrashIcon } from '../../components/icons'
-import { designers as initialDesigners, type Designer } from '../../data/designers'
-
-const STORAGE_KEY = 'hairme_mock_admin_designers'
+import { supabase } from '../../lib/supabase'
+import type { Designer } from '../../data/designers'
 
 export default function AdminDesigners() {
-  const [designers, setDesigners] = useState<Designer[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? (JSON.parse(stored) as Designer[]) : initialDesigners
-  })
+  const [designers, setDesigners] = useState<Designer[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [editingDesigner, setEditingDesigner] = useState<Designer | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [search, setSearch] = useState('')
 
+  const loadDesigners = useCallback(async () => {
+    setDataLoading(true)
+    const { data } = await supabase.from('designers').select('*').order('created_at', { ascending: true })
+    setDesigners((data ?? []) as Designer[])
+    setDataLoading(false)
+  }, [])
+
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(designers))
-  }, [designers])
+    loadDesigners()
+  }, [loadDesigners])
 
   const openAddForm = () => {
     setEditingDesigner(null)
@@ -28,20 +32,27 @@ export default function AdminDesigners() {
     setFormOpen(true)
   }
 
-  const handleSubmit = (values: DesignerFormValues) => {
+  const handleSubmit = async (values: DesignerFormValues) => {
     if (editingDesigner) {
-      setDesigners((prev) =>
-        prev.map((designer) => (designer.id === editingDesigner.id ? { ...designer, ...values } : designer)),
-      )
+      const { error } = await supabase.from('designers').update(values).eq('id', editingDesigner.id)
+      if (error) return error.message
     } else {
-      setDesigners((prev) => [...prev, { ...values, id: crypto.randomUUID() }])
+      const { error } = await supabase.from('designers').insert(values)
+      if (error) return error.message
     }
     setFormOpen(false)
+    loadDesigners()
+    return null
   }
 
-  const handleDelete = (designer: Designer) => {
+  const handleDelete = async (designer: Designer) => {
     if (!window.confirm(`'${designer.name}' 디자이너를 삭제할까요?`)) return
-    setDesigners((prev) => prev.filter((d) => d.id !== designer.id))
+    const { error } = await supabase.from('designers').delete().eq('id', designer.id)
+    if (error) {
+      window.alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+    loadDesigners()
   }
 
   const filteredDesigners = designers.filter((designer) => designer.name.includes(search.trim()))
@@ -71,7 +82,11 @@ export default function AdminDesigners() {
         className="mt-6 w-full max-w-xs rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
       />
 
-      {filteredDesigners.length === 0 ? (
+      {dataLoading ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-accent/20 px-5 py-6 text-sm text-ink/40">
+          불러오는 중...
+        </p>
+      ) : filteredDesigners.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-accent/20 px-5 py-6 text-sm text-ink/40">
           {designers.length === 0 ? '등록된 디자이너가 없어요.' : '검색 결과가 없어요.'}
         </p>

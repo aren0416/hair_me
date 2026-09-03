@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { designers } from '../data/designers'
-import { menuItems } from '../data/menuItems'
+import type { Designer } from '../data/designers'
+import type { MenuRow } from '../data/menuItems'
+import { supabase } from '../lib/supabase'
 import { formatDateLabel } from '../utils/date'
 
 interface BookingState {
@@ -17,8 +19,36 @@ export default function BookingComplete() {
   const location = useLocation()
   const state = location.state as BookingState | null
 
-  const menuItem = state ? menuItems.find((m) => m.id === state.menuId) : undefined
-  const designer = state ? designers.find((d) => d.id === state.designerId) : undefined
+  const [menuItem, setMenuItem] = useState<MenuRow | null | undefined>(undefined)
+  const [designer, setDesigner] = useState<Designer | null>(null)
+
+  useEffect(() => {
+    if (!state?.menuId) {
+      setMenuItem(null)
+      return
+    }
+
+    supabase
+      .from('menus')
+      .select('*')
+      .eq('id', state.menuId)
+      .maybeSingle()
+      .then(({ data }) => setMenuItem((data as MenuRow | null) ?? null))
+
+    if (state.designerId) {
+      supabase
+        .from('designers')
+        .select('*')
+        .eq('id', state.designerId)
+        .maybeSingle()
+        .then(({ data }) => setDesigner((data as Designer | null) ?? null))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (menuItem === undefined) {
+    return null
+  }
 
   if (!state || !menuItem) {
     return (
@@ -32,7 +62,7 @@ export default function BookingComplete() {
   }
 
   const rows = [
-    { label: '시술', value: `${menuItem.name} (${menuItem.duration})` },
+    { label: '시술', value: `${menuItem.name} (${menuItem.duration_minutes}분)` },
     { label: '디자이너', value: designer ? `${designer.name} ${designer.title}` : '상관없음' },
     { label: '일시', value: `${formatDateLabel(state.date)} ${state.time}` },
     { label: '예약자', value: `${state.name} / ${state.phone}` },

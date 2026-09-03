@@ -1,18 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { categories, menuItems } from '../data/menuItems'
+import { categories, type MenuRow } from '../data/menuItems'
+import { supabase } from '../lib/supabase'
 
 export default function Menu() {
+  const [items, setItems] = useState<MenuRow[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<(typeof categories)[number]['id']>('all')
 
+  const loadItems = useCallback(async () => {
+    setDataLoading(true)
+    const { data } = await supabase.from('menus').select('*').order('created_at', { ascending: true })
+    setItems((data ?? []) as MenuRow[])
+    setDataLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadItems()
+  }, [loadItems])
+
   const filtered = useMemo(() => {
-    return menuItems.filter((item) => {
+    return items.filter((item) => {
       const matchesCategory = category === 'all' || item.category === category
       const matchesQuery = item.name.toLowerCase().includes(query.trim().toLowerCase())
       return matchesCategory && matchesQuery
     })
-  }, [query, category])
+  }, [items, query, category])
 
   return (
     <div className="px-4 py-20 sm:px-6 sm:py-28">
@@ -53,7 +67,9 @@ export default function Menu() {
         </div>
 
         {/* Menu grid */}
-        {filtered.length > 0 ? (
+        {dataLoading ? (
+          <p className="mt-16 text-center text-sm text-ink/50">불러오는 중...</p>
+        ) : filtered.length > 0 ? (
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((item) => (
               <Link
@@ -71,8 +87,8 @@ export default function Menu() {
                   <h3 className="text-lg font-semibold text-ink">{item.name}</h3>
                   <p className="mt-1 text-sm text-ink/60 line-clamp-1">{item.description}</p>
                   <div className="mt-4 flex items-center justify-between border-t border-accent/10 pt-3">
-                    <span className="text-xs text-ink/50">{item.duration}</span>
-                    <span className="font-semibold text-accent">{item.price}</span>
+                    <span className="text-xs text-ink/50">{item.duration_minutes}분</span>
+                    <span className="font-semibold text-accent">{item.price.toLocaleString('ko-KR')}원</span>
                   </div>
                 </div>
               </Link>

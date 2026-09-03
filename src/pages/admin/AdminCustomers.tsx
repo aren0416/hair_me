@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   createColumnHelper,
   flexRender,
@@ -7,26 +7,145 @@ import {
   useReactTable,
   type SortingState,
 } from '@tanstack/react-table'
-import { useReservations, type Reservation } from '../../context/ReservationsContext'
-import { menuItems } from '../../data/menuItems'
-import { buildCustomers, type CustomerRow } from '../../utils/customers'
+import { supabase } from '../../lib/supabase'
 import { formatDateLabel } from '../../utils/date'
 
-const statusBadgeClass: Record<Reservation['status'], string> = {
+type ReservationStatus = '예정' | '완료' | '취소됨'
+
+interface ReservationRow {
+  id: string
+  date: string
+  time: string
+  status: ReservationStatus
+  menuName: string
+  designerId: string | null
+  designerName: string
+}
+
+interface CustomerRow {
+  customerId: string
+  name: string
+  phone: string
+  email: string
+  visitCount: number
+  lastVisitDate: string | null
+  favoriteDesignerName: string
+  reservations: ReservationRow[]
+}
+
+const statusBadgeClass: Record<ReservationStatus, string> = {
   예정: 'bg-accent/10 text-accent',
   완료: 'bg-ink/10 text-ink/60',
   취소됨: 'bg-ink/5 text-ink/40',
 }
 
+function buildCustomers(
+  rows: {
+    id: string
+    date: string
+    time: string
+    status: ReservationStatus
+    customerId: string
+    name: string
+    phone: string
+    email: string
+    menuName: string
+    designerId: string | null
+    designerName: string
+  }[],
+): CustomerRow[] {
+  const groups = new Map<string, typeof rows>()
+  for (const row of rows) {
+    const list = groups.get(row.customerId) ?? []
+    list.push(row)
+    groups.set(row.customerId, list)
+  }
+
+  return Array.from(groups.entries()).map(([customerId, list]) => {
+    const latest = [...list].sort((a, b) => `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`))[0]
+    const completed = list.filter((r) => r.status === '완료')
+    const lastVisit = completed.length
+      ? completed.reduce((latest, r) => (`${r.date}T${r.time}` > `${latest.date}T${latest.time}` ? r : latest)).date
+      : null
+
+    const designerCounts = new Map<string, { name: string; count: number }>()
+    for (const r of list) {
+      if (!r.designerId) continue
+      const entry = designerCounts.get(r.designerId) ?? { name: r.designerName, count: 0 }
+      entry.count += 1
+      designerCounts.set(r.designerId, entry)
+    }
+    let favoriteDesignerName = '-'
+    let maxCount = 0
+    for (const { name, count } of designerCounts.values()) {
+      if (count > maxCount) {
+        maxCount = count
+        favoriteDesignerName = name
+      }
+    }
+
+    return {
+      customerId,
+      name: latest.name,
+      phone: latest.phone,
+      email: latest.email,
+      visitCount: completed.length,
+      lastVisitDate: lastVisit,
+      favoriteDesignerName,
+      reservations: list.map((r) => ({
+        id: r.id,
+        date: r.date,
+        time: r.time,
+        status: r.status,
+        menuName: r.menuName,
+        designerId: r.designerId,
+        designerName: r.designerName,
+      })),
+    }
+  })
+}
+
 const columnHelper = createColumnHelper<CustomerRow>()
 
 export default function AdminCustomers() {
-  const { reservations } = useReservations()
+  const [customers, setCustomers] = useState<CustomerRow[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [sorting, setSorting] = useState<SortingState>([{ id: 'visitCount', desc: true }])
   const [selected, setSelected] = useState<CustomerRow | null>(null)
 
-  const customers = useMemo(() => buildCustomers(reservations), [reservations])
+  const loadCustomers = useCallback(async () => {
+    setDataLoading(true)
+    const { data } = await supabase
+      .from('reservations')
+      .select('id, date, time, status, name, phone, customer_id, menus(name), designers(id, name, title), profiles(email)')
+
+    const rows = (data ?? []).map((r) => ({
+      id: r.id as string,
+      date: r.date as string,
+      time: (r.time as string).slice(0, 5),
+      status: r.status as ReservationStatus,
+      customerId: r.customer_id as string,
+      name: r.name as string,
+      phone: r.phone as string,
+      email: (r.profiles as unknown as { email: string } | null)?.email ?? '알 수 없음',
+      menuName: (r.menus as unknown as { name: string } | null)?.name ?? '알 수 없음',
+      designerId: (r.designers as unknown as { id: string } | null)?.id ?? null,
+      designerName: r.designers
+        ? (() => {
+            const designer = r.designers as unknown as { name: string; title: string }
+            return `${designer.name} ${designer.title}`
+          })()
+        : '상관없음',
+    }))
+
+    setCustomers(buildCustomers(rows))
+    setDataLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadCustomers()
+  }, [loadCustomers])
 
   const filteredCustomers = useMemo(() => {
     const keyword = search.trim()
@@ -92,7 +211,11 @@ export default function AdminCustomers() {
         className="mt-6 w-full max-w-xs rounded-xl border border-accent/20 bg-white/60 px-3 py-2 text-sm text-ink outline-none focus:border-accent"
       />
 
-      {filteredCustomers.length === 0 ? (
+      {dataLoading ? (
+        <p className="mt-6 rounded-2xl border border-dashed border-accent/20 px-5 py-6 text-sm text-ink/40">
+          불러오는 중...
+        </p>
+      ) : filteredCustomers.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-dashed border-accent/20 px-5 py-6 text-sm text-ink/40">
           {customers.length === 0 ? '예약 기록이 없어서 고객 목록이 비어 있어요.' : '검색 결과가 없어요.'}
         </p>
@@ -156,7 +279,9 @@ export default function AdminCustomers() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <h2 className="text-lg font-semibold text-ink">{customer.name}</h2>
-                <p className="mt-1 text-sm text-ink/50">{customer.phone}</p>
+                <p className="mt-1 text-sm text-ink/50">
+                  {customer.phone} · {customer.email}
+                </p>
 
                 <div className="mt-4 flex gap-4 border-t border-accent/10 pt-4 text-sm">
                   <div>
@@ -177,22 +302,19 @@ export default function AdminCustomers() {
 
                 <h3 className="mt-6 text-sm font-semibold text-ink">예약 이력</h3>
                 <div className="mt-2 divide-y divide-accent/10 overflow-hidden rounded-2xl border border-accent/20">
-                  {history.map((r) => {
-                    const menuName = menuItems.find((m) => m.id === r.menuId)?.name ?? '알 수 없음'
-                    return (
-                      <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                        <div>
-                          <p className="text-sm font-medium text-ink">{menuName}</p>
-                          <p className="mt-0.5 text-xs text-ink/50">
-                            {formatDateLabel(r.date)} {r.time}
-                          </p>
-                        </div>
-                        <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[r.status]}`}>
-                          {r.status}
-                        </span>
+                  {history.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-ink">{r.menuName}</p>
+                        <p className="mt-0.5 text-xs text-ink/50">
+                          {formatDateLabel(r.date)} {r.time}
+                        </p>
                       </div>
-                    )
-                  })}
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadgeClass[r.status]}`}>
+                        {r.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
                 <button

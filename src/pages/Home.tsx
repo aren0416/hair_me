@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { designers } from '../data/designers'
+import type { Designer } from '../data/designers'
+import { supabase } from '../lib/supabase'
 
 const heroImg =
   'https://images.unsplash.com/photo-1637777277337-f114350fb088?auto=format&fit=crop&w=1800&q=80'
@@ -28,6 +30,16 @@ const menus = [
 ]
 
 export default function Home() {
+  const [designers, setDesigners] = useState<Designer[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('designers')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .then(({ data }) => setDesigners((data ?? []) as Designer[]))
+  }, [])
+
   return (
     <div>
       {/* Hero */}

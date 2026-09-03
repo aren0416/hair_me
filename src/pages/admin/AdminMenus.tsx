@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import MenuFormModal, { type MenuFormValues, type MenuRow } from '../../components/admin/MenuFormModal'
+import MenuFormModal, { type MenuFormValues } from '../../components/admin/MenuFormModal'
 import { PencilIcon, PlusIcon, TrashIcon } from '../../components/icons'
 import { supabase } from '../../lib/supabase'
-import { categories } from '../../data/menuItems'
+import { categories, type MenuRow } from '../../data/menuItems'
 
 const editableCategories = categories.filter((c) => c.id !== 'all')
 

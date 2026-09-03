@@ -1,19 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import ImageUploadField from './ImageUploadField'
-import { categories, type MenuItem } from '../../data/menuItems'
+import { categories, type MenuCategory, type MenuRow } from '../../data/menuItems'
 
 const editableCategories = categories.filter((c) => c.id !== 'all')
-
-export interface MenuRow {
-  id: string
-  category: MenuItem['category']
-  name: string
-  description: string
-  detail: string
-  duration_minutes: number
-  price: number
-  image: string
-}
 
 export type MenuFormValues = Omit<MenuRow, 'id'>
 
@@ -24,7 +13,7 @@ interface MenuFormModalProps {
 }
 
 const emptyForm = {
-  category: 'cut' as MenuItem['category'],
+  category: 'cut' as MenuCategory,
   name: '',
   description: '',
   detail: '',
@@ -34,7 +23,7 @@ const emptyForm = {
 }
 
 export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuFormModalProps) {
-  const [category, setCategory] = useState<MenuItem['category']>(initialValue?.category ?? emptyForm.category)
+  const [category, setCategory] = useState<MenuCategory>(initialValue?.category ?? emptyForm.category)
   const [name, setName] = useState(initialValue?.name ?? emptyForm.name)
   const [description, setDescription] = useState(initialValue?.description ?? emptyForm.description)
   const [detail, setDetail] = useState(initialValue?.detail ?? emptyForm.detail)
@@ -81,7 +70,7 @@ export default function MenuFormModal({ initialValue, onClose, onSubmit }: MenuF
             <select
               required
               value={category}
-              onChange={(e) => setCategory(e.target.value as MenuItem['category'])}
+              onChange={(e) => setCategory(e.target.value as MenuCategory)}
               className="w-full rounded-xl border border-accent/20 bg-white/60 px-3 py-2.5 text-sm text-ink outline-none focus:border-accent"
             >
               {editableCategories.map((c) => (

@@ -1,13 +1,69 @@
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { StarIcon } from '../components/icons'
-import { designers } from '../data/designers'
-import { menuItems } from '../data/menuItems'
-import { reviews } from '../data/reviews'
+import type { MenuRow } from '../data/menuItems'
+import { supabase } from '../lib/supabase'
 import { maskName } from '../utils/mask'
+
+interface ReviewRow {
+  id: string
+  userName: string
+  rating: number
+  content: string
+  designerName: string | null
+}
+
+const categoryLabel: Record<MenuRow['category'], string> = {
+  cut: '커트',
+  perm: '펌',
+  color: '컬러',
+  clinic: '클리닉',
+}
 
 export default function MenuDetail() {
   const { id } = useParams()
-  const menuItem = menuItems.find((m) => m.id === id)
+  const [menuItem, setMenuItem] = useState<MenuRow | null | undefined>(undefined)
+  const [reviews, setReviews] = useState<ReviewRow[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    if (!id) return
+    setReviewsLoading(true)
+
+    const [menuRes, reviewsRes] = await Promise.all([
+      supabase.from('menus').select('*').eq('id', id).maybeSingle(),
+      supabase
+        .from('reviews')
+        .select('id, user_name, rating, content, designers(name, title)')
+        .eq('menu_id', id)
+        .order('created_at', { ascending: false }),
+    ])
+
+    setMenuItem((menuRes.data as MenuRow | null) ?? null)
+    setReviews(
+      (reviewsRes.data ?? []).map((r) => ({
+        id: r.id as string,
+        userName: r.user_name as string,
+        rating: r.rating as number,
+        content: r.content as string,
+        designerName: r.designers
+          ? (() => {
+              const designer = r.designers as unknown as { name: string; title: string }
+              return `${designer.name} ${designer.title}`
+            })()
+          : null,
+      })),
+    )
+    setReviewsLoading(false)
+  }, [id])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  if (menuItem === undefined) {
+    return null
+  }
 
   if (!menuItem) {
     return (
@@ -19,8 +75,6 @@ export default function MenuDetail() {
       </div>
     )
   }
-
-  const itemReviews = reviews.filter((r) => r.menuId === menuItem.id)
 
   return (
     <div>
@@ -34,14 +88,16 @@ export default function MenuDetail() {
           />
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-accent">
-              {{ cut: '커트', perm: '펌', color: '컬러', clinic: '클리닉' }[menuItem.category]}
+              {categoryLabel[menuItem.category]}
             </p>
             <h1 className="mt-3 text-3xl font-semibold text-ink">{menuItem.name}</h1>
 
             <div className="mt-4 flex items-center gap-3 text-sm text-ink/60">
-              <span>{menuItem.duration}</span>
+              <span>{menuItem.duration_minutes}분</span>
               <span className="text-ink/20">·</span>
-              <span className="text-lg font-semibold text-accent">{menuItem.price}</span>
+              <span className="text-lg font-semibold text-accent">
+                {menuItem.price.toLocaleString('ko-KR')}원
+              </span>
             </div>
 
             <p className="mt-6 leading-relaxed text-ink/70">{menuItem.detail}</p>
@@ -59,33 +115,30 @@ export default function MenuDetail() {
       {/* 후기 */}
       <section className="border-t border-accent/20 bg-white/40 px-4 py-20 sm:px-6 sm:py-28">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-semibold text-ink">후기 {itemReviews.length}</h2>
+          <h2 className="text-2xl font-semibold text-ink">후기 {reviews.length}</h2>
 
-          {itemReviews.length === 0 ? (
+          {reviewsLoading ? (
+            <p className="mt-6 text-sm text-ink/50">불러오는 중...</p>
+          ) : reviews.length === 0 ? (
             <p className="mt-6 text-sm text-ink/50">아직 등록된 후기가 없습니다.</p>
           ) : (
             <div className="mt-8 space-y-4">
-              {itemReviews.map((review) => {
-                const designer = designers.find((d) => d.id === review.designerId)
-                return (
-                  <div key={review.id} className="rounded-2xl border border-accent/20 bg-background p-6">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-ink">{maskName(review.userName)}</span>
-                      <div className="flex gap-0.5 text-accent">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <StarIcon key={i} className="size-4" filled={i < review.rating} />
-                        ))}
-                      </div>
+              {reviews.map((review) => (
+                <div key={review.id} className="rounded-2xl border border-accent/20 bg-background p-6">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-ink">{maskName(review.userName)}</span>
+                    <div className="flex gap-0.5 text-accent">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <StarIcon key={i} className="size-4" filled={i < review.rating} />
+                      ))}
                     </div>
-                    <p className="mt-3 text-sm leading-relaxed text-ink/70">{review.content}</p>
-                    {designer && (
-                      <p className="mt-3 text-xs text-ink/40">
-                        시술 디자이너: {designer.name} {designer.title}
-                      </p>
-                    )}
                   </div>
-                )
-              })}
+                  <p className="mt-3 text-sm leading-relaxed text-ink/70">{review.content}</p>
+                  {review.designerName && (
+                    <p className="mt-3 text-xs text-ink/40">시술 디자이너: {review.designerName}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

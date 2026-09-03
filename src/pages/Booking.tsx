@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StepDateTime from '../components/booking/StepDateTime'
 import StepDesigner from '../components/booking/StepDesigner'
@@ -8,11 +8,9 @@ import StepMenu from '../components/booking/StepMenu'
 import StepReview from '../components/booking/StepReview'
 import LoginForm from '../components/LoginForm'
 import { useAuth } from '../context/AuthContext'
-import { useReservations } from '../context/ReservationsContext'
 import { useSession } from '../context/SessionContext'
-import { designers } from '../data/designers'
-import { menuItems } from '../data/menuItems'
-import { designerIdToSupabaseId, menuIdToSupabaseId } from '../data/supabaseIds'
+import type { Designer } from '../data/designers'
+import type { MenuRow } from '../data/menuItems'
 import { supabase } from '../lib/supabase'
 
 interface Selection {
@@ -38,12 +36,30 @@ const initialSelection: Selection = {
 export default function Booking() {
   const { isLoggedIn, loading } = useAuth()
   const { session } = useSession()
-  const { addReservation } = useReservations()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [selection, setSelection] = useState<Selection>(initialSelection)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  const [menus, setMenus] = useState<MenuRow[]>([])
+  const [designers, setDesigners] = useState<Designer[]>([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
+
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true)
+    const [menusRes, designersRes] = await Promise.all([
+      supabase.from('menus').select('*').order('created_at', { ascending: true }),
+      supabase.from('designers').select('*').order('created_at', { ascending: true }),
+    ])
+    setMenus((menusRes.data ?? []) as MenuRow[])
+    setDesigners((designersRes.data ?? []) as Designer[])
+    setCatalogLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadCatalog()
+  }, [loadCatalog])
 
   if (loading) {
     return null
@@ -64,8 +80,8 @@ export default function Booking() {
 
     const { error: insertError } = await supabase.from('reservations').insert({
       customer_id: session.user.id,
-      menu_id: menuIdToSupabaseId[selection.menuId],
-      designer_id: selection.designerId ? (designerIdToSupabaseId[selection.designerId] ?? null) : null,
+      menu_id: selection.menuId,
+      designer_id: selection.designerId ?? null,
       date: selection.date,
       time: selection.time,
       name: selection.name,
@@ -79,20 +95,10 @@ export default function Booking() {
       return
     }
 
-    addReservation({
-      menuId: selection.menuId,
-      designerId: selection.designerId ?? null,
-      date: selection.date,
-      time: selection.time,
-      name: selection.name,
-      phone: selection.phone,
-      notes: selection.notes,
-    })
-
     navigate('/booking/complete', { state: selection })
   }
 
-  const selectedMenu = menuItems.find((m) => m.id === selection.menuId)
+  const selectedMenu = menus.find((m) => m.id === selection.menuId)
   const selectedDesigner = designers.find((d) => d.id === selection.designerId) ?? null
 
   return (
@@ -102,6 +108,8 @@ export default function Booking() {
       <div className="mt-12">
         {step === 1 && (
           <StepMenu
+            menus={menus}
+            loading={catalogLoading}
             selectedId={selection.menuId}
             onSelect={(menuId) => setSelection((s) => ({ ...s, menuId }))}
             onNext={goNext}
@@ -110,6 +118,8 @@ export default function Booking() {
 
         {step === 2 && (
           <StepDesigner
+            designers={designers}
+            loading={catalogLoading}
             selectedId={selection.designerId}
             onSelect={(designerId) => setSelection((s) => ({ ...s, designerId }))}
             onNext={goNext}

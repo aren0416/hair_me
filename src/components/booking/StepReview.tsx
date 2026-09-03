@@ -1,9 +1,9 @@
 import type { Designer } from '../../data/designers'
-import type { MenuItem } from '../../data/menuItems'
+import type { MenuRow } from '../../data/menuItems'
 import { formatDateLabel } from '../../utils/date'
 
 interface StepReviewProps {
-  menuItem: MenuItem
+  menuItem: MenuRow
   designer: Designer | null
   date: string
   time: string
@@ -30,12 +30,12 @@ export default function StepReview({
   onBack,
 }: StepReviewProps) {
   const rows = [
-    { label: '시술', value: `${menuItem.name} (${menuItem.duration})` },
+    { label: '시술', value: `${menuItem.name} (${menuItem.duration_minutes}분)` },
     { label: '디자이너', value: designer ? `${designer.name} ${designer.title}` : '상관없음' },
     { label: '일시', value: `${formatDateLabel(date)} ${time}` },
     { label: '예약자', value: `${name} / ${phone}` },
     { label: '요청사항', value: notes || '-' },
-    { label: '결제 예정 금액', value: menuItem.price },
+    { label: '결제 예정 금액', value: `${menuItem.price.toLocaleString('ko-KR')}원` },
   ]
 
   return (

@@ -1,9 +1,27 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { designers } from '../data/designers'
+import type { Designer } from '../data/designers'
+import { supabase } from '../lib/supabase'
 
 export default function DesignerDetail() {
   const { id } = useParams()
-  const designer = designers.find((d) => d.id === id)
+  const [designer, setDesigner] = useState<Designer | null | undefined>(undefined)
+
+  useEffect(() => {
+    if (!id) return
+    supabase
+      .from('designers')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setDesigner((data as Designer | null) ?? null)
+      })
+  }, [id])
+
+  if (designer === undefined) {
+    return null
+  }
 
   if (!designer) {
     return (

@@ -1,6 +1,6 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import ImageCropUploader from '../ImageCropUploader'
-import { deleteImageIfOwned } from '../../lib/imageUpload'
+import { deleteImageIfOwned } from '../../lib/deleteImage'
 
 interface ImageUploadFieldProps {
   label: string

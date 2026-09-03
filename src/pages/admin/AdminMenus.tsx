@@ -50,7 +50,11 @@ export default function AdminMenus() {
     if (!window.confirm(`'${item.name}' 메뉴를 삭제할까요?`)) return
     const { error } = await supabase.from('menus').delete().eq('id', item.id)
     if (error) {
-      window.alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      if (error.code === '23503') {
+        window.alert('이 시술로 접수된 예약 내역이 있어 삭제할 수 없어요.')
+      } else {
+        window.alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+      }
       return
     }
     loadItems()

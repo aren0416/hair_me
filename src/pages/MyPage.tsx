@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import LoginForm from '../components/LoginForm'
-import ImageCropUploader from '../components/ImageCropUploader'
 import { CalendarIcon, CameraIcon, ChevronRightIcon, ListIcon, PhoneIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
 import { useSession } from '../context/SessionContext'
 import { supabase } from '../lib/supabase'
-import { deleteImageIfOwned } from '../lib/imageUpload'
+import { deleteImageIfOwned } from '../lib/deleteImage'
 import { formatDateLabel } from '../utils/date'
+
+// 크롭/이미지 압축 라이브러리는 용량이 커서, 아바타 변경을 실제로 누른 방문자만 받도록 지연 로드
+const ImageCropUploader = lazy(() => import('../components/ImageCropUploader'))
 
 const quickActions = [
   { to: '/booking', label: '새 예약', icon: CalendarIcon },
@@ -155,13 +157,15 @@ export default function MyPage() {
           className="hidden"
         />
         {selectedAvatarImage && session && (
-          <ImageCropUploader
-            imageSrc={selectedAvatarImage}
-            aspect={1}
-            folder={`avatars/${session.user.id}`}
-            onCancel={closeAvatarCropModal}
-            onUploaded={handleAvatarUploaded}
-          />
+          <Suspense fallback={null}>
+            <ImageCropUploader
+              imageSrc={selectedAvatarImage}
+              aspect={1}
+              folder={`avatars/${session.user.id}`}
+              onCancel={closeAvatarCropModal}
+              onUploaded={handleAvatarUploaded}
+            />
+          </Suspense>
         )}
         {avatarError && <p className="mt-2 text-xs text-red-500">{avatarError}</p>}
         <h1 className="mt-4 text-xl font-semibold text-ink">{user.name}</h1>

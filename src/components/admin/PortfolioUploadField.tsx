@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import ImageCropUploader from '../ImageCropUploader'
 import { TrashIcon } from '../icons'
-import { deleteImageIfOwned } from '../../lib/imageUpload'
+import { deleteImageIfOwned } from '../../lib/deleteImage'
 
 interface PortfolioUploadFieldProps {
   label: string

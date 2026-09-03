@@ -29,12 +29,3 @@ export async function uploadImage(folder: string, blob: Blob): Promise<string> {
 
   return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
 }
-
-// 우리 버킷에 올라간 이미지가 아니면(과거 외부 URL 등) 조용히 무시
-export async function deleteImageIfOwned(url: string) {
-  const marker = `/storage/v1/object/public/${BUCKET}/`
-  const idx = url.indexOf(marker)
-  if (idx === -1) return
-  const path = url.slice(idx + marker.length)
-  await supabase.storage.from(BUCKET).remove([path])
-}
